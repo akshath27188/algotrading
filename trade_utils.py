@@ -94,12 +94,12 @@ def get_live_price(client,symbols_map):
         return None
 
 # Get Live Price
-def get_live_feed(client,symbols_map):
-    #global symbols_map,symbol
+def get_live_feed(client,symbols_map,symbol):
+    #global symbol
     logging.info("fetching live price")
     try:
         symbol_token = symbols_map[symbol]
-        logging.debug('symbol-token:{symbol_token}')
+        logging.debug(f'symbol-token:{symbol_token}')
         feed = client.ltpData("NSE", symbol, symbol_token)  # Adjust token (26000) for your symbol
         logging.debug(f'feed: {feed}')
         return feed if feed and 'data' in feed else None

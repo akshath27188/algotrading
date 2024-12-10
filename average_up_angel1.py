@@ -34,7 +34,7 @@ def removeTokenFiles():
 # Define trading parameters for short selling
 initial_position_size = 10  # Number of shares to sell initially
 sell_increment_pct = 0.1 / 100  # Sell more after a 0.1% price rise
-profit_target_pct = 1.0 / 100  # Cover when 0.7% profit is achieved (price drop)
+profit_target_pct = 0.95 / 100  # Cover when 0.7% profit is achieved (price drop)
 stop_loss_pct = 0.5 / 100  # Stop loss at 0.35% price rise
 initial_entering_price = 1053  # Initial price to start short selling
 
@@ -70,7 +70,9 @@ def beginAverageUpShort(client,symbols_map):
                 if (positions == 0 and current_price >= initial_entering_price) or (positions > 0 and current_price > avg_price * (1 + sell_increment_pct)):
                     logging.info('Averaging up, placing short sell order...')
                     order_id = place_order(client,'SELL', initial_position_size, current_price,symbols_map)
-                    if order_id:
+                    orderDetails = client.getTranStatus(order_id)
+                    orderStatus = orderDetails['data']['status']
+                    if order_id and orderStatus!='rejected':
                         positions += initial_position_size
                         avg_price = ((avg_price * (positions - initial_position_size)) + (current_price * initial_position_size)) / positions
                         logging.info(f"Short sold {initial_position_size} shares at {current_price:.2f}, Total positions: {positions}, Avg price: {avg_price:.2f}")
@@ -79,7 +81,9 @@ def beginAverageUpShort(client,symbols_map):
                 if positions > 0 and current_price <= avg_price * (1 - profit_target_pct):
                     logging.info('Placing buy order, profit target percentage reached...')
                     order_id = place_order(client,'BUY', positions, current_price,symbols_map)
-                    if order_id:
+                    orderDetails = client.getTranStatus(order_id)
+                    orderStatus = orderDetails['data']['status']
+                    if order_id and orderStatus!='rejected':
                         pnl = positions * (avg_price - current_price)  # Profit in short selling
                         total_pnl += pnl
                         capital += positions * avg_price
@@ -91,7 +95,9 @@ def beginAverageUpShort(client,symbols_map):
                 if positions > 0 and current_price >= avg_price * (1 + stop_loss_pct):
                     logging.info('Stop loss triggered, covering all positions.')
                     order_id = place_order(client,'BUY', positions, current_price,symbols_map)
-                    if order_id:
+                    orderDetails = client.getTranStatus(order_id)
+                    orderStatus = orderDetails['data']['status']
+                    if order_id and orderStatus!='rejected':
                         pnl = positions * (avg_price - current_price)
                         total_pnl += pnl
                         capital += positions * avg_price
@@ -148,6 +154,7 @@ try:
     logging.info("Logged in successfully")
     #load symbols and token map
     symbols_map=download_and_map_symbols()
+    
     beginAverageUpShort(client,symbols_map)
 except Exception as e:
     logging.info(f"Login error: {e}")
