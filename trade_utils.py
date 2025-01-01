@@ -107,13 +107,46 @@ def get_live_feed(client,symbols_map,symbol):
         logging.info(f"Error fetching live price: {e}")
         return None
 
+def cancel_order(client,uid,retry):
+    
+    logging.info("fetching live price")
+    try:
+        
+        cresult = client.cancelOrder(uid, "NORMAL")  # Adjust token (26000) for your symbol
+        if data in cresult and cresult['data']['message']=="SUCCESS":
+            return True
+        else:
+            if retry:
+                time.sleep(retry)
+                cancel_order(uid)
+            return False        
+    except Exception as e:
+        logging.info(f"Error fetching live price: {e}")
+        return None
+
+def get_status_details(client,uid,retry):    
+    logging.info("fetching live price")
+    try:      
+        cresult = client.individual_order_details(uid)  # Adjust token (26000) for your symbol
+        #order_status = cresult['data']['status']
+        if not cresult and retry:
+            time.sleep(retry)
+            get_status_details(uid,retry)
+        return cresult       
+    except Exception as e:
+        if retry:
+            time.sleep(retry)
+            get_status_details(uid,retry)
+        logging.info(f"Error fetching live price: {e}")
+        return None
+
 # Place Order
-def place_order(client,order_type, qty, price,symbols_map):
+def placeOrderFullResponse(client,order_type, qty, price,symbol,token):
     
     order_params = {
         "variety": "NORMAL",
         "tradingsymbol": symbol,
-        "symboltoken": symbols_map[symbol],  # Adjust token for your symbol
+        "symboltoken": token,  # Adjust token for your symbol
         "transactiontype": order_type,
         "exchange": "NSE",
         "ordertype": "LIMIT",
@@ -123,8 +156,9 @@ def place_order(client,order_type, qty, price,symbols_map):
         "duration": "DAY"
     }
     try:
-        order_id = client.placeOrder(order_params)
-        return order_id
+        orderDetails = client.placeOrderFullResponse(order_params)
+        logging.debug(f"placed uniq order id - {orderDetails['data']['uniqueorderid']}")
+        return orderDetails
     except Exception as e:
         logging.info(f"Error placing order: {e}")
         return None
