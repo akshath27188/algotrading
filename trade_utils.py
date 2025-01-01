@@ -113,7 +113,7 @@ def cancel_order(client,uid,retry):
     try:
         
         cresult = client.cancelOrder(uid, "NORMAL")  # Adjust token (26000) for your symbol
-        if data in cresult and cresult['data']['message']=="SUCCESS":
+        if cresult and cresult['message']=="SUCCESS":
             return True
         else:
             if retry:
