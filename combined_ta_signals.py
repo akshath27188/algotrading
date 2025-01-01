@@ -22,7 +22,7 @@ from datetime import datetime
 import sys
 from trade_utils import *
 from __init__ import *
-from angel_websocket import *
+#from angel_websocket import *
 import traceback
 import argparse
 import signal
@@ -462,6 +462,7 @@ def execute_trade(pdf,signal, current_price,backtest,symbol,token,client):
     if signal == 'Buy' and available_capital >= trade_cost and len(positions) == 0:
         # Execute a buy if there is enough capital       
         orderDetails = placeOrderFullResponse(client,'BUY', quantity_per_trade, current_price,symbol,token)
+        time.sleep(9)
         orderStatusDetails = get_status_details(client,orderDetails['data']['uniqueorderid'],1)
         orderStatus = orderStatusDetails['data']['orderstatus']
         logging.debug(f'order status - {orderStatusDetails}')
@@ -471,6 +472,10 @@ def execute_trade(pdf,signal, current_price,backtest,symbol,token,client):
             print(f"Executed Buy at {current_price}, Remaining Capital: {available_capital}")
             logging.debug(f"Executed Buy at {current_price}, Remaining Capital: {available_capital}")
             entry_price = current_price
+        
+       
+        # orderStatusDetails = get_status_details(client,orderDetails['data']['uniqueorderid'],1)
+        # orderStatus = orderStatusDetails['data']['orderstatus']
         if orderStatus == 'open':
             cancel_order(client, orderDetails['data']['orderid'],1)        
         
@@ -486,6 +491,7 @@ def execute_trade(pdf,signal, current_price,backtest,symbol,token,client):
 
                 if meets_threshold:
                     orderDetails = placeOrderFullResponse(client,'SELL', quantity_per_trade, current_price,symbol,token)
+                    time.sleep(9)
                     orderStatusDetails = get_status_details(client,orderDetails['data']['uniqueorderid'],1)
                     orderStatus = orderStatusDetails['data']['orderstatus']
                     logging.debug(f'order status - {orderStatusDetails}')
@@ -495,7 +501,11 @@ def execute_trade(pdf,signal, current_price,backtest,symbol,token,client):
                         positions.remove(pos)
                         print(f"Executed Sell at {current_price}, entry-price: {pos['price']},  Profit: {profit}, Remaining Capital: {available_capital}")
                         logging.debug(f"Executed Sell at {current_price}, entry-price: {pos['price']}, Profit: {profit}, Remaining Capital: {available_capital}")
-                        break
+                        #break
+
+                   
+                    # orderStatusDetails = get_status_details(client,orderDetails['data']['uniqueorderid'],1)
+                    # orderStatus = orderStatusDetails['data']['orderstatus']
                     if orderStatus == 'open':
                         cancel_order(client, orderDetails['data']['orderid'],1)    
 
@@ -503,6 +513,7 @@ def execute_trade(pdf,signal, current_price,backtest,symbol,token,client):
     elif signal == 'Sell' and available_capital >= trade_cost and len(positions) == 0:
         # Execute a short sell if there is enough capital
         orderDetails = placeOrderFullResponse(client,'SELL', quantity_per_trade, current_price,symbol,token)
+        time.sleep(9) 
         orderStatusDetails = get_status_details(client,orderDetails['data']['uniqueorderid'],1)
         orderStatus = orderStatusDetails['data']['orderstatus']
         logging.debug(f'order status - {orderStatusDetails}')
@@ -512,6 +523,10 @@ def execute_trade(pdf,signal, current_price,backtest,symbol,token,client):
             positions.append({'type': 'Sell', 'price': current_price, 'quantity': quantity_per_trade})
             print(f"Executed Short Sell at {current_price}, Remaining Capital: {available_capital}")
             logging.debug(f"Executed Short Sell at {current_price}, Remaining Capital: {available_capital}")
+        
+           
+        # orderStatusDetails = get_status_details(client,orderDetails['data']['uniqueorderid'],1)
+        # orderStatus = orderStatusDetails['data']['orderstatus']
         if orderStatus == 'open':
             cancel_order(client, orderDetails['data']['orderid'],1)        
         
@@ -527,6 +542,7 @@ def execute_trade(pdf,signal, current_price,backtest,symbol,token,client):
                 
                 if meets_threshold:
                     orderDetails = placeOrderFullResponse(client,'BUY', quantity_per_trade, current_price,symbol,token)
+                    time.sleep(9)
                     orderStatusDetails = get_status_details(client,orderDetails['data']['uniqueorderid'])
                     orderStatus = orderStatusDetails['data']['orderstatus']
                     logging.debug(f'order status - {orderStatusDetails}')
@@ -537,7 +553,11 @@ def execute_trade(pdf,signal, current_price,backtest,symbol,token,client):
                         #entry_price=None
                         print(f"Executed Buy to Cover at {current_price}, entry-price: {pos['price']}, Profit: {profit}, Remaining Capital: {available_capital}")
                         logging.debug(f"Executed Buy to Cover at {current_price}, entry-price: {pos['price']}, Profit: {profit}, Remaining Capital: {available_capital}")
-                        break
+                        #break
+
+                    
+                    # orderStatusDetails = get_status_details(client,orderDetails['data']['uniqueorderid'],1)
+                    # orderStatus = orderStatusDetails['data']['orderstatus']
                     if orderStatus == 'open':
                         cancel_order(client, orderDetails['data']['orderid'],1)    
     
@@ -687,7 +707,7 @@ def beginCollectiveTABasedStrategy(client, symbol_map,symbol,token,backtest,df):
         date = datetime.now()
         
         # Append new row to the DataFrame
-        new_row = {"Date": date, "Ltp": ltp_price, "Signal": None, "PnL": pnl}
+        new_row = {"Date": date, "Ltp": ltp_price, "Signal": None}
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
         pd.set_option('display.max_columns', None)
         print('Length of df - ',len(df))
@@ -706,12 +726,12 @@ def beginCollectiveTABasedStrategy(client, symbol_map,symbol,token,backtest,df):
             #check for stoploss
             if len(positions)>=1:
                 diff_threshold = abs(positions[0]['price'] - ltp_price) / positions[0]['price'] 
-                if positions[0]['type'] =='Buy' and ltp_price < positions[0]['price'] and diff_threshold >= profit_threshold/2:
+                if len(positions)>=1 and positions[0]['type'] =='Buy' and ltp_price < positions[0]['price'] and diff_threshold >= (profit_threshold*0.75):
                        #sell
                        orderDetails = placeOrderFullResponse(client,'SELL', positions[0]['quantity'], ltp_price,symbol,token)
                        positions.remove(positions[0])
                        logging.debug(f'stop loss order details- {orderDetails}')
-                if positions[0]['type'] == 'Sell' and ltp_price > positions[0]['price'] and diff_threshold >= profit_threshold/2:
+                if len(positions)>=1 and positions[0]['type'] == 'Sell' and ltp_price > positions[0]['price'] and diff_threshold >= (profit_threshold*0.75):
                         #buy 
                        orderDetails = placeOrderFullResponse(client,'BUY', positions[0]['quantity'], ltp_price,symbol,token)
                        positions.remove(positions[0])
@@ -753,6 +773,7 @@ print("Executing RSI Bollinger Strategy")
 try:
     args = None
     feedToken=''
+    #generate_key(keyfile)
     client = SmartConnect(api_key=creds['api_key'])
     if not os.path.exists(jwtTokenFile):
         data = client.generateSession(creds['client_id'], creds['password'], creds['totp_key'])
