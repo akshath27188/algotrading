@@ -472,7 +472,7 @@ def execute_trade(pdf,signal, current_price,backtest,symbol,token,client):
             logging.debug(f"Executed Buy at {current_price}, Remaining Capital: {available_capital}")
             entry_price = current_price
         if orderStatus == 'open':
-            cancel_order(client, orderDetails['data']['uniqueorderid'],1)        
+            cancel_order(client, orderDetails['data']['orderid'],1)        
         
 
     elif signal == 'Sell' and any(pos['type'] == 'Buy' for pos in positions) :
@@ -497,7 +497,7 @@ def execute_trade(pdf,signal, current_price,backtest,symbol,token,client):
                         logging.debug(f"Executed Sell at {current_price}, entry-price: {pos['price']}, Profit: {profit}, Remaining Capital: {available_capital}")
                         break
                     if orderStatus == 'open':
-                        cancel_order(client, orderDetails['data']['uniqueorderid'],1)    
+                        cancel_order(client, orderDetails['data']['orderid'],1)    
 
 
     elif signal == 'Sell' and available_capital >= trade_cost and len(positions) == 0:
@@ -513,7 +513,7 @@ def execute_trade(pdf,signal, current_price,backtest,symbol,token,client):
             print(f"Executed Short Sell at {current_price}, Remaining Capital: {available_capital}")
             logging.debug(f"Executed Short Sell at {current_price}, Remaining Capital: {available_capital}")
         if orderStatus == 'open':
-            cancel_order(client, orderDetails['data']['uniqueorderid'],1)        
+            cancel_order(client, orderDetails['data']['orderid'],1)        
         
 
     elif signal == 'Buy' and any(pos['type'] == 'Sell' for pos in positions):
@@ -539,7 +539,7 @@ def execute_trade(pdf,signal, current_price,backtest,symbol,token,client):
                         logging.debug(f"Executed Buy to Cover at {current_price}, entry-price: {pos['price']}, Profit: {profit}, Remaining Capital: {available_capital}")
                         break
                     if orderStatus == 'open':
-                        cancel_order(client, orderDetails['data']['uniqueorderid'],1)    
+                        cancel_order(client, orderDetails['data']['orderid'],1)    
     
     #logging.debug(f"value after setting entry price  - {entry_price}")
     pdf.loc[pdf.index[-1], 'PnL'] = profit
