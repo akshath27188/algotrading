@@ -730,11 +730,13 @@ def beginCollectiveTABasedStrategy(client, symbol_map,symbol,token,backtest,df):
                        #sell
                        orderDetails = placeOrderFullResponse(client,'SELL', positions[0]['quantity'], ltp_price,symbol,token)
                        positions.remove(positions[0])
+                       available_capital += trade_cost
                        logging.debug(f'stop loss order details- {orderDetails}')
                 if len(positions)>=1 and positions[0]['type'] == 'Sell' and ltp_price > positions[0]['price'] and diff_threshold >= (profit_threshold*0.75):
                         #buy 
                        orderDetails = placeOrderFullResponse(client,'BUY', positions[0]['quantity'], ltp_price,symbol,token)
                        positions.remove(positions[0])
+                       available_capital += trade_cost
                        logging.debug(f'stop loss order details- {orderDetails}')
             #positions[0]['diff_threshold'] = abs(positions[0]['price'] - current_price) 
             processed_df = process_data(wdf,False,symbol,token,client) #, ltp_price, signal)

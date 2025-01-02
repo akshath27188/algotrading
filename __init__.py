@@ -27,7 +27,7 @@ creds = {
     "client_id": "A227074",
     "password": "7882",
     "api_key": "DdeNeHJ4",
-    "totp_key": "951012"  # TOTP key for 2FA
+    "totp_key": "656819"  # TOTP key for 2FA
 }
 
 # Configure the logging
